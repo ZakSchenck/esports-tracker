@@ -1,21 +1,14 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { getCodMatches } from '../../api/cod_matches.js'
 import { useToggleMatches } from '../../stores/toggleMatches.js'
+import MatchesAccordion from './MatchesAccordion.vue'
 const toggleMatches = useToggleMatches()
 
 const matches = ref(null)
-
-// Extended acronyms for each team key
-const acronyms = {
-  LAT: 'Los Angeles Thieves',
-  TEX: 'Optic Texas',
-  CRR: 'Carolina Royal Ravens',
-  LAG: 'Los Angeles Guerillas',
-  BOS: 'Boston Breach',
-  LVL: 'Las Vegas Legion',
-  MH: 'Miami Heretics'
-}
+const openMatchId = ref(null)
+const accordionOpenBool = ref(true)
+const isMatchDataLoading = ref(true)
 
 /**
  * Fetches match data
@@ -24,14 +17,20 @@ const fetchCodMatchData = async () => {
   try {
     const returnedMatchData = await getCodMatches()
     matches.value = returnedMatchData.reverse()
+    console.log(matches.value)
   } catch (err) {
     console.error(err)
+
+  } finally {
+    // Finally clause to handle loading screen
+    isMatchDataLoading.value = false
+    console.log(isMatchDataLoading.value)
   }
 }
 
 /**
  * Formats date string to match time
- * @param {String} date 
+ * @param {String} date
  */
 function formatMatchTime(date) {
   const datetime = new Date(date)
@@ -44,7 +43,7 @@ function formatMatchTime(date) {
 
 /**
  * Formats full date to long written out format
- * @param {String} dateInput 
+ * @param {String} dateInput
  */
 function formatMatchDate(dateInput) {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -73,19 +72,50 @@ function formatMatchDate(dateInput) {
 }
 
 /**
+ * Toggles match data accordion
+ * @param {Number} id
+ */
+function toggleMatch(id) {
+  openMatchId.value = openMatchId.value === id ? null : id
+}
+
+// Computed property that reverses or de-reverses the API depending on the LiveBtn selection they're on
+const orderedMatches = computed(() => {
+  if (toggleMatches.completed) {
+    return matches.value.slice().reverse()
+  }
+  return matches.value
+})
+
+/**
  * Switches which way the API loop looks
- * @param {Number} index 
+ * @param {Number} index
  */
 function switchIndexTraverse(index) {
-    return !toggleMatches.completed ? index - 1  : index + 1;
+  return !toggleMatches.completed ? index - 1 : index - 1
 }
+
+// Removes active accordion pop up with LiveBtns are interacted with
+watch(
+  () => toggleMatches.completed,
+  () => {
+    openMatchId.value = null
+  },
+  { immediate: true }
+)
 
 onMounted(fetchCodMatchData)
 </script>
 
 <template>
-  <div>
-    <div v-for="(match, i) in matches" :key="match.id">
+  <div v-if="isMatchDataLoading">
+    <div class="matches-card__loading-wrapper"></div>
+    <div id="loading-box-1"></div>
+    <div id="loading-box-2"></div>
+  </div>
+
+  <div v-else>
+    <div v-for="(match, i) in orderedMatches" :key="match.id" @click="toggleMatch(match.id)">
       <div
         v-if="
           (match.status === 'not_started' && !toggleMatches.completed) ||
@@ -93,7 +123,9 @@ onMounted(fetchCodMatchData)
         "
       >
         <div
-          v-if="matches[switchIndexTraverse(i)].begin_at.slice(0, 10) !== match.begin_at.slice(0, 10)"
+          v-if="
+            matches[switchIndexTraverse(i)].begin_at.slice(0, 10) !== match.begin_at.slice(0, 10)
+          "
           class="matches-card__date"
         >
           <hr />
@@ -105,19 +137,24 @@ onMounted(fetchCodMatchData)
           <span>{{ match.serie.full_name }}</span>
         </p>
 
-        <div class="g">
+        <div class="matches-card__card-container">
           <div class="matches-card__team-wrapper" v-for="team in match.opponents" :key="team.id">
             <img :src="team.opponent.image_url" :alt="team.opponent.acronym" />
             <h3>
               {{
-                acronyms[team.opponent.acronym]
-                  ? acronyms[team.opponent.acronym]
-                  : team.opponent.acronym
+                team.opponent.name
               }}
             </h3>
           </div>
         </div>
       </div>
+      <Transition name="slide-fade">
+        <MatchesAccordion
+          v-if="openMatchId === match.id"
+          :id="match.id"
+          :isAccordionOpen="accordionOpenBool"
+        />
+      </Transition>
     </div>
   </div>
 </template>
@@ -132,6 +169,15 @@ onMounted(fetchCodMatchData)
     text-decoration: underline;
     text-transform: uppercase;
   }
+}
+
+.slide-fade-enter-active {
+  transition: opacity 0.95s ease-in-out;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
 }
 
 .matches-card__date {
@@ -159,7 +205,7 @@ onMounted(fetchCodMatchData)
   }
 }
 
-.g {
+.matches-card__card-container {
   background-color: rgb(44, 44, 44);
   transition: 0.4s;
   cursor: pointer;
@@ -182,6 +228,75 @@ onMounted(fetchCodMatchData)
   img {
     height: 32px;
     width: auto;
+  }
+}
+
+.matches-card__loading-wrapper {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background-color: black;
+  opacity: 0.5;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  h1 {
+    z-index: 4;
+  }
+}
+
+#loading-box-1 {
+  width: 150px;
+  height: 150px;
+  border: 6px solid rgb(55, 199, 105);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  animation: spinForward 1s infinite linear;
+  transform-origin: center;
+  z-index: 4;
+}
+
+@keyframes spinForward {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  25% {
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+}
+
+#loading-box-2 {
+  width: 150px;
+  height: 150px;
+  border: 6px solid rgb(85, 184, 255);
+  position: absolute;
+  background-color: black;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  animation: spinBackwards 2s infinite linear;
+  transform-origin: center;
+  z-index: 4;
+}
+
+@keyframes spinBackwards {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  25% {
+    transform: translate(-50%, -50%) rotate(-90deg);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(-180deg);
+  }
+  75% {
+    transform: translate(-50%, -50%) rotate(-270deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg);
   }
 }
 </style>

@@ -1,32 +1,31 @@
 <script setup>
-import {ref} from 'vue';
-import LiveBtn from '../buttons/LiveBtn.vue';
-import MatchesCard from './MatchesCard.vue';
-import { useToggleMatches } from '../../stores/toggleMatches.js';
+import { ref } from 'vue'
+import LiveBtn from '../buttons/LiveBtn.vue'
+import MatchesCard from './MatchesCard.vue'
+import { useToggleMatches } from '../../stores/toggleMatches.js'
 const toggleMatches = useToggleMatches()
 
 // Selected ID ref to be updated on click
 const selectedId = ref(1)
 
-// List of content for each LiveBtn instance
+// List of content for each LiveBtn component instance
 const buttonList = [
-  { id: 1, content: 'Upcoming/Live', bgColor: 'transparent'},
-  { id: 2, content: 'Completed', bgColor: 'transparent'},
+  { id: 1, content: 'Upcoming/Live', bgColor: 'transparent' },
+  { id: 2, content: 'Completed', bgColor: 'transparent' }
 ]
 
 /**
  * updates the selected button ID value, and updates api filter
- * @param {Number} id 
+ * @param {Number} id
  */
 const handleUpdate = (id) => {
   selectedId.value = id
   toggleMatches.toggle()
-  console.log(toggleMatches.completed)
 }
 </script>
 
 <template>
-  <section>
+  <div class="a">
     <h1>Matches</h1>
     <p>Season</p>
     <p id="matches-container__game">2024 Season (MWIII)</p>
@@ -41,18 +40,20 @@ const handleUpdate = (id) => {
         @update="handleUpdate(button.id)"
       />
     </div>
-    <MatchesCard />
-  </section>
+    <Transition name="slide-fade">
+      <MatchesCard />
+    </Transition>
+  </div>
 </template>
 
 <style lang="scss" scoped>
-section {
+.a {
   background-color: rgb(18, 18, 18);
   color: rgb(161, 161, 161);
-  max-width: 750px;
   border-radius: 8px;
-  margin: 28px auto;
+  margin: 28px 0 !important;
   padding: 16px;
+  width: 750px;
   h1 {
     font-size: 32px;
     margin-bottom: 12px;
@@ -72,5 +73,14 @@ section {
     flex-direction: row;
     gap: 8px;
   }
+}
+
+.slide-fade-enter-active {
+  transition: opacity 0.95s ease-in-out;
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
 }
 </style>
