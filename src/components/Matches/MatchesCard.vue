@@ -245,6 +245,10 @@ onMounted(fetchCodMatchData)
   }
 }
 
+h3 {
+    font-weight: 300;
+}
+
 #loading-box-1 {
   width: 150px;
   height: 150px;
