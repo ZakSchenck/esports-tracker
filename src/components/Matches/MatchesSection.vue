@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import LiveBtn from '../buttons/LiveBtn.vue'
 import MatchesCard from './MatchesCard.vue'
-import { useToggleMatches } from '../../stores/toggleMatches.js'
+import { useToggleMatches } from '../../stores/store.js'
 const toggleMatches = useToggleMatches()
 
 // Selected ID ref to be updated on click
@@ -83,4 +83,4 @@ const handleUpdate = (id) => {
 .slide-fade-leave-to {
   opacity: 0;
 }
-</style>
+</style>../../stores/store.js

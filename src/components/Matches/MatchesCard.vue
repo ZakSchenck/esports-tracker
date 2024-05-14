@@ -1,10 +1,13 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import { getCodMatches } from '../../api/cod_matches.js'
-import { useToggleMatches } from '../../stores/toggleMatches.js'
+import { useToggleMatches } from '../../stores/store.js'
 import MatchesAccordion from './MatchesAccordion.vue'
+import NoMatches from './NoMatches.vue'
+import ButtonPill from '../buttons/ButtonPill.vue'
+import { useSwappedApiData } from '../../stores/store.js'
+const swappedApiData = useSwappedApiData()
 const toggleMatches = useToggleMatches()
-
 const matches = ref(null)
 const openMatchId = ref(null)
 const accordionOpenBool = ref(true)
@@ -20,11 +23,9 @@ const fetchCodMatchData = async () => {
     console.log(matches.value)
   } catch (err) {
     console.error(err)
-
   } finally {
     // Finally clause to handle loading screen
     isMatchDataLoading.value = false
-    console.log(isMatchDataLoading.value)
   }
 }
 
@@ -84,7 +85,7 @@ const orderedMatches = computed(() => {
   if (toggleMatches.completed) {
     return matches.value.slice().reverse()
   }
-  return matches.value
+  return matches.value.filter((match) => match.status === 'not_started')
 })
 
 /**
@@ -94,6 +95,30 @@ const orderedMatches = computed(() => {
 function switchIndexTraverse(index) {
   return !toggleMatches.completed ? index - 1 : index - 1
 }
+
+// Reloads api data when search is triggered
+watch(
+  () => swappedApiData.isDataChanged,
+  async () => {
+    if (swappedApiData.getDataChanged) {
+      try {
+        const returnedMatchData = await getCodMatches()
+        matches.value = returnedMatchData
+          .reverse()
+          .filter(
+            (i) =>
+              (i.opponents[0]?.opponent.name === swappedApiData.getSearchedTeam ||
+                i.opponents[1]?.opponent.name === swappedApiData.getSearchedTeam) &&
+              (!toggleMatches.completed || i.status === 'not_started')
+          )
+      } catch (err) {
+        console.error(err)
+      }
+    } else {
+      fetchCodMatchData()
+    }
+  }
+)
 
 // Removes active accordion pop up with LiveBtns are interacted with
 watch(
@@ -115,19 +140,15 @@ onMounted(fetchCodMatchData)
   </div>
 
   <div v-else>
-    <div v-for="(match, i) in orderedMatches" :key="match.id" @click="toggleMatch(match.id)">
-      <div
-        v-if="
-          (match.status === 'not_started' && !toggleMatches.completed) ||
-          (match.status === 'finished' && toggleMatches.completed)
-        "
-      >
-        <div
-          v-if="
-            matches[switchIndexTraverse(i)].begin_at.slice(0, 10) !== match.begin_at.slice(0, 10)
-          "
-          class="matches-card__date"
-        >
+    <ButtonPill
+      v-if="swappedApiData.getDataChanged"
+      btnContent="Reset Search Results"
+      btnBgColor="red"
+    />
+
+    <template v-if="orderedMatches.length > 0">
+      <div v-for="(match, i) in orderedMatches" :key="match.id" @click="toggleMatch(match.id)">
+        <div class="matches-card__date">
           <hr />
           <p>{{ formatMatchDate(match.begin_at) }}</p>
           <hr />
@@ -140,24 +161,26 @@ onMounted(fetchCodMatchData)
         <div class="matches-card__card-container">
           <div class="matches-card__team-wrapper" v-for="team in match.opponents" :key="team.id">
             <img :src="team.opponent.image_url" :alt="team.opponent.acronym" />
-            <h3>
-              {{
-                team.opponent.name
-              }}
-            </h3>
+            <h3>{{ team.opponent.name }}</h3>
           </div>
         </div>
+
+        <Transition name="slide-fade">
+          <MatchesAccordion
+            v-if="openMatchId === match.id"
+            :id="match.id"
+            :isAccordionOpen="accordionOpenBool"
+          />
+        </Transition>
       </div>
-      <Transition name="slide-fade">
-        <MatchesAccordion
-          v-if="openMatchId === match.id"
-          :id="match.id"
-          :isAccordionOpen="accordionOpenBool"
-        />
-      </Transition>
+    </template>
+    
+    <div v-else>
+      <NoMatches />
     </div>
   </div>
 </template>
+
 
 <style lang="scss" scoped>
 #matches-card__detail-text {
@@ -235,8 +258,8 @@ onMounted(fetchCodMatchData)
   position: fixed;
   width: 100%;
   height: 100%;
-  background-color: black;
-  opacity: 0.5;
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(7px);
   top: 0;
   left: 0;
   z-index: 3;
@@ -246,7 +269,7 @@ onMounted(fetchCodMatchData)
 }
 
 h3 {
-    font-weight: 300;
+  font-weight: 300;
 }
 
 #loading-box-1 {
@@ -303,4 +326,4 @@ h3 {
     transform: translate(-50%, -50%) rotate(0deg);
   }
 }
-</style>
+</style>../../stores/store.js

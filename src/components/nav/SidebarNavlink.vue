@@ -3,14 +3,19 @@ const props = defineProps({
     // Image asset for navlink
     navAsset: String,
     // Content for text
-    textContent: String
+    textContent: String,
+    // Hyperlink for routing
+    routingLink: {
+        type: String,
+        default: '#'
+    }
 })
 </script>
 
 <template>
   <div>
     <img :src="props.navAsset" :alt="props.textContent" />
-    <a href="#">{{ props.textContent }}</a>
+    <a :href="props.routingLink">{{ props.textContent }}</a>
   </div>
 </template>
 

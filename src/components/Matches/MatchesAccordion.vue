@@ -1,7 +1,7 @@
 <script setup>
 import { getSingleCodMatch } from '../../api/cod_matches.js'
 import { ref, onMounted, defineProps } from 'vue'
-import { useToggleMatches } from '../../stores/toggleMatches.js'
+import { useToggleMatches } from '../../stores/store.js'
 import AccordionCompletedSec from './AccordionCompletedSec.vue'
 const toggleMatches = useToggleMatches()
 
@@ -20,7 +20,6 @@ async function processSingleCodMatch() {
   try {
     const returnedMatch = await getSingleCodMatch(props.id)
     match.value = returnedMatch
-    console.log(match.value)
   } catch (err) {
     console.error('Error fetch match: ', err)
   } finally {
@@ -99,4 +98,4 @@ hr {
   margin-bottom: 16px;
   background-color: rgb(84, 84, 84);
 }
-</style>
+</style>../../stores/store.js
