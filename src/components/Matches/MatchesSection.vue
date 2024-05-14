@@ -3,7 +3,8 @@ import { ref } from 'vue'
 import LiveBtn from '../buttons/LiveBtn.vue'
 import MatchesCard from './MatchesCard.vue'
 import { useToggleMatches } from '../../stores/store.js'
-const toggleMatches = useToggleMatches()
+const toggleMatches = useToggleMatches();
+
 
 // Selected ID ref to be updated on click
 const selectedId = ref(1)

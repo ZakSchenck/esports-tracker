@@ -1,8 +1,7 @@
 <script setup>
 import Header from './components/nav/Header.vue'
-import MatchesSection from './components/matches/MatchesSection.vue'
 import SidebarContainer from './components/nav/SidebarContainer.vue'
-import SearchBar from './components/inputs/search/SearchBar.vue'
+import MatchesSection from './components/matches/MatchesSection.vue'
 </script>
 
 <template>
@@ -12,7 +11,6 @@ import SearchBar from './components/inputs/search/SearchBar.vue'
       <SidebarContainer />
       <MatchesSection />
     </div>
-    <SearchBar />
   </main>
 </template>
 

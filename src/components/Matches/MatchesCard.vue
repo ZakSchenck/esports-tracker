@@ -4,8 +4,8 @@ import { getCodMatches } from '../../api/cod_matches.js'
 import { useToggleMatches } from '../../stores/store.js'
 import MatchesAccordion from './MatchesAccordion.vue'
 import NoMatches from './NoMatches.vue'
-import ButtonPill from '../buttons/ButtonPill.vue'
 import { useSwappedApiData } from '../../stores/store.js'
+import Favorite from '../buttons/Favorite.vue'
 const swappedApiData = useSwappedApiData()
 const toggleMatches = useToggleMatches()
 const matches = ref(null)
@@ -88,38 +88,6 @@ const orderedMatches = computed(() => {
   return matches.value.filter((match) => match.status === 'not_started')
 })
 
-/**
- * Switches which way the API loop looks
- * @param {Number} index
- */
-function switchIndexTraverse(index) {
-  return !toggleMatches.completed ? index - 1 : index - 1
-}
-
-// Reloads api data when search is triggered
-watch(
-  () => swappedApiData.isDataChanged,
-  async () => {
-    if (swappedApiData.getDataChanged) {
-      try {
-        const returnedMatchData = await getCodMatches()
-        matches.value = returnedMatchData
-          .reverse()
-          .filter(
-            (i) =>
-              (i.opponents[0]?.opponent.name === swappedApiData.getSearchedTeam ||
-                i.opponents[1]?.opponent.name === swappedApiData.getSearchedTeam) &&
-              (!toggleMatches.completed || i.status === 'not_started')
-          )
-      } catch (err) {
-        console.error(err)
-      }
-    } else {
-      fetchCodMatchData()
-    }
-  }
-)
-
 // Removes active accordion pop up with LiveBtns are interacted with
 watch(
   () => toggleMatches.completed,
@@ -147,7 +115,7 @@ onMounted(fetchCodMatchData)
     />
 
     <template v-if="orderedMatches.length > 0">
-      <div v-for="(match, i) in orderedMatches" :key="match.id" @click="toggleMatch(match.id)">
+      <div v-for="match in orderedMatches" :key="match.id" @click="toggleMatch(match.id)" class="x">
         <div class="matches-card__date">
           <hr />
           <p>{{ formatMatchDate(match.begin_at) }}</p>
@@ -157,6 +125,7 @@ onMounted(fetchCodMatchData)
           {{ formatMatchTime(match.begin_at) }} | BO{{ match.games.length }} |
           <span>{{ match.serie.full_name }}</span>
         </p>
+        <Favorite />
 
         <div class="matches-card__card-container">
           <div class="matches-card__team-wrapper" v-for="team in match.opponents" :key="team.id">
@@ -192,6 +161,10 @@ onMounted(fetchCodMatchData)
     text-decoration: underline;
     text-transform: uppercase;
   }
+}
+
+.x {
+  position: relative;
 }
 
 .slide-fade-enter-active {

@@ -14,20 +14,6 @@ export const useToggleMatches = defineStore('matchToggle', {
   }
 });
 
-export const useToggleSearchBar = defineStore('searchToggle', {
-  state: () => ({
-    isSearchBarOpen: false
-  }),
-  getters: {
-    searchBar: (state) => state.isSearchBarOpen,
-  },
-  actions: {
-    toggle() {
-      this.isSearchBarOpen = !this.isSearchBarOpen;
-    },
-  }
-});
-
 export const useSwappedApiData = defineStore('reloadData', {
   state: () => ({
     isDataChanged: false,
